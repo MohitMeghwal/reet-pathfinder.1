@@ -46,7 +46,7 @@
   background: linear-gradient(90deg, #f59e0b, #f97316);
   color: #13222b;
   font-weight: 800;
-  box-shadow: 0 4px 16px rgba(249, 115, 22, 0.4);
+  box-shadow: 0 4px 16px rgba(249, 115, 22, 0.45);
 }
 
 .btn-teal {
@@ -81,27 +81,26 @@
   box-shadow: var(--shadow-md);
 }
 
-/* Hero Banner */
+/* Full-Bleed Hero Banner matching Reference Image */
 .hero-banner {
   position: relative;
   border-radius: var(--radius-lg);
   overflow: hidden;
-  background: linear-gradient(110deg, rgba(8, 39, 77, 0.86) 0%, rgba(18, 86, 155, 0.52) 52%, rgba(77, 171, 247, 0.25) 100%);
+  background: linear-gradient(110deg, #0b2f54 0%, #1d6fc2 55%, #60a5fa 100%);
   color: #fff;
-  padding: 24px 28px;
-  min-height: 230px;
-  display: grid;
-  grid-template-columns: 1.15fr 1fr;
+  padding: 28px 30px;
+  min-height: 250px;
+  display: flex;
   align-items: center;
-  gap: 16px;
   box-shadow: var(--shadow-lg);
   margin-bottom: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
 .hero-copy {
   position: relative;
   z-index: 2;
+  max-width: 58%;
 }
 
 .hero-title {
@@ -109,7 +108,7 @@
   font-weight: 800;
   color: #fff;
   line-height: 1.3;
-  text-shadow: 0 2px 10px rgba(7, 25, 48, 0.55);
+  text-shadow: 0 2px 10px rgba(7, 25, 48, 0.65);
 }
 
 .hero-title .hero-highlight {
@@ -119,26 +118,30 @@
 .hero-sub {
   margin: 10px 0 18px;
   font-size: 0.98rem;
-  color: rgba(255, 255, 255, 0.95);
-  text-shadow: 0 1px 4px rgba(7, 25, 48, 0.45);
+  color: rgba(255, 255, 255, 0.96);
+  text-shadow: 0 1px 6px rgba(7, 25, 48, 0.55);
 }
 
 .hero-art {
-  position: relative;
+  position: absolute;
+  inset: 0;
   z-index: 1;
-  display: flex;
-  justify-content: flex-end;
-  align-items: flex-end;
-  min-height: 185px;
+  pointer-events: none;
+}
+
+.hero-art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(7, 30, 56, 0.85) 0%, rgba(12, 54, 98, 0.52) 48%, rgba(12, 54, 98, 0.04) 100%);
 }
 
 .hero-art img,
 .hero-art svg {
   width: 100%;
-  max-width: 440px;
-  height: auto;
-  border-radius: var(--radius-md);
-  filter: drop-shadow(0 8px 18px rgba(7, 34, 43, 0.3));
+  height: 100%;
+  object-fit: cover;
+  object-position: right center;
 }
 
 /* Parchment Card with Curled Corner Effect */
@@ -255,14 +258,22 @@
 }
 
 .subject-card-art {
-  height: 92px;
+  height: 98px;
   display: grid;
   place-items: center;
 }
 
-.subject-card-art img,
+.subject-card-art img {
+  height: 94px;
+  width: 94px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.22);
+}
+
 .subject-card-art svg {
-  max-height: 90px;
+  max-height: 92px;
   width: auto;
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
 }
@@ -550,14 +561,16 @@
   }
 
   .hero-banner {
-    grid-template-columns: 1fr;
-    padding: 16px;
-    min-height: auto;
+    padding: 18px 16px;
+    min-height: 220px;
   }
 
-  .hero-art {
-    min-height: 130px;
-    justify-content: center;
+  .hero-copy {
+    max-width: 100%;
+  }
+
+  .hero-art::after {
+    background: linear-gradient(180deg, rgba(7, 30, 56, 0.35) 0%, rgba(7, 30, 56, 0.85) 100%);
   }
 
   .stats-grid {
@@ -585,7 +598,8 @@
 
   .subject-card-art img,
   .subject-card-art svg {
-    max-height: 44px;
+    height: 44px;
+    width: 44px;
   }
 
   .subject-card-body {
