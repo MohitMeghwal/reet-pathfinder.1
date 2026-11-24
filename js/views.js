@@ -21,10 +21,6 @@
     mockResultFilter: "all"
   };
 
-  function getSubjectMeta(id) {
-    return REET.SUBJECT_META.find(function (m) { return m.id === id; }) || REET.SUBJECT_META[0];
-  }
-
   function renderSubjectGraphic(subjId) {
     if (REET.assets[subjId]) {
       return '<img src="' + esc(REET.assets[subjId]) + '" alt="" loading="lazy">';
@@ -32,7 +28,7 @@
     return REET.svg.subjectArt(subjId);
   }
 
-  /* 1. DASHBOARD */
+  /* 1. DASHBOARD (Matches Reference Image Layout & Visual Hierarchy) */
   REET.renderDashboard = function () {
     var summary = REET.getProgressSummary();
     var st = REET.state;
@@ -57,31 +53,29 @@
       var qCount = REET.dataHealth.countsBySubject[m.id] || 0;
       var stSub = summary.subjectStats[m.id] || { percent: 0 };
       return '<article class="subject-card" data-subject="' + esc(m.id) + '">' +
+        '<h3 class="subject-card-title">' + esc(m.title) + '</h3>' +
         '<div class="subject-card-art">' + renderSubjectGraphic(m.id) + '</div>' +
         '<div class="subject-card-body">' +
-          '<h3 class="subject-card-title">' + esc(m.title) + '</h3>' +
           '<p class="subject-card-meta">' + qCount + ' प्रश्न | ' + chTotal + ' चैप्टर</p>' +
+          '<p class="subject-card-meta" style="font-weight:700;">' + stSub.percent + '% पूर्ण</p>' +
           '<div class="subject-progress-track"><div class="subject-progress-fill" style="width:' + stSub.percent + '%"></div></div>' +
-          '<p class="subject-card-meta">' + stSub.percent + '% पूर्ण</p>' +
         '</div>' +
         '<a class="subject-card-btn btn" href="#/library/' + esc(m.id) + '">अध्ययन शुरू करें →</a>' +
         '<a class="subject-card-arrow" href="#/library/' + esc(m.id) + '" aria-label="' + esc(m.title) + ' खोलें">→</a>' +
       '</article>';
     }).join("");
 
-    // Today's Tasks Widget
     var tasks = (st.planner.tasks || []).slice(0, 5);
     var doneTasks = tasks.filter(function (t) { return t.done; }).length;
     var tasksHtml = tasks.length
       ? tasks.map(function (t) {
-          return '<label style="display:flex;align-items:center;gap:8px;min-height:36px;cursor:pointer;">' +
+          return '<label style="display:flex;align-items:center;gap:8px;min-height:32px;font-size:0.86rem;cursor:pointer;">' +
             '<input type="checkbox" data-action="toggle-task" data-task-id="' + esc(t.id) + '" ' + (t.done ? "checked" : "") + '>' +
             '<span style="' + (t.done ? "text-decoration:line-through;opacity:0.65;" : "") + '">' + esc(t.title) + '</span>' +
           '</label>';
         }).join("")
-      : '<p class="text-muted">आज कोई लक्ष्य नहीं जोड़ा गया है।</p>';
+      : '<p style="font-size:0.86rem;color:var(--text-muted);">आज कोई लक्ष्य नहीं जोड़ा गया है।</p>';
 
-    // Question of the Day Widget
     var qotd = REET.getQuestionOfTheDay();
     var todayKey = REET.getTodayKey();
     var qotdSaved = st.qotd && st.qotd[todayKey];
@@ -89,31 +83,43 @@
     if (!qotd) {
       qotdHtml = '<p>प्रश्न डेटा लोड होने पर आज का महत्वपूर्ण प्रश्न यहाँ दिखेगा।</p>';
     } else {
+      var topicInfo = REET.getTopicById(qotd.topicId);
+      var chLabel = topicInfo ? topicInfo.chapter.title.split(":")[0] : qotd.subjectId.toUpperCase();
       var opts = qotd.options.map(function (opt, idx) {
         var cls = "option-btn";
         if (qotdSaved && qotdSaved.submitted) {
           if (idx === qotd.correct) cls += " correct";
           else if (idx === qotdSaved.choice) cls += " wrong";
         }
-        return '<button type="button" class="' + cls + '" data-action="answer-qotd" data-qid="' + esc(qotd.id) + '" data-opt="' + idx + '" ' + (qotdSaved && qotdSaved.submitted ? "disabled" : "") + '>' +
+        return '<button type="button" class="' + cls + '" style="min-height:38px;padding:7px 10px;font-size:0.88rem;" data-action="answer-qotd" data-qid="' + esc(qotd.id) + '" data-opt="' + idx + '" ' + (qotdSaved && qotdSaved.submitted ? "disabled" : "") + '>' +
           '<strong>' + ["A", "B", "C", "D"][idx] + '.</strong> <span>' + esc(opt) + '</span></button>';
       }).join("");
-      qotdHtml = '<p style="font-weight:600;margin-top:0;">' + esc(qotd.question) + '</p>' +
-        '<div class="option-list">' + opts + '</div>' +
-        (qotdSaved && qotdSaved.submitted ? '<div class="explanation-box"><strong>व्याख्या:</strong> ' + esc(qotd.explanation) + '</div>' : "");
+
+      qotdHtml = '<p style="font-weight:700;margin:0 0 8px;font-size:0.94rem;">' + esc(qotd.question) + '</p>' +
+        '<div class="qotd-split">' +
+          '<div class="option-list" style="margin:0;gap:6px;">' + opts + '</div>' +
+          '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">' +
+            '<span style="font-size:2.4rem;" aria-hidden="true">💡</span>' +
+            '<span class="badge" style="background:var(--orange-500);color:#fff;">' + esc(chLabel) + '</span>' +
+          '</div>' +
+        '</div>' +
+        (qotdSaved && qotdSaved.submitted ? '<div class="explanation-box" style="font-size:0.86rem;"><strong>व्याख्या:</strong> ' + esc(qotd.explanation) + '</div>' : "");
     }
 
-    // Last Mock Widget
     var lastMockHtml = summary.lastMock
       ? '<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">' +
           REET.charts.donut(summary.lastMock.percent, summary.lastMock.percent + "%") +
-          '<div><p style="margin:0;font-weight:700;">' + esc(summary.lastMock.title) + '</p>' +
-          '<p style="margin:4px 0;">स्कोर: <strong>' + summary.lastMock.score + ' / ' + summary.lastMock.maxScore + '</strong></p>' +
+          '<div><p style="margin:0;font-size:0.88rem;color:var(--text-secondary);">आपका स्कोर</p>' +
+          '<p style="margin:2px 0 8px;font-size:1.3rem;font-weight:800;">' + summary.lastMock.score + ' / ' + summary.lastMock.maxScore + '</p>' +
           '<a href="#/mock" class="btn btn-teal btn-sm">विस्तृत रिपोर्ट देखें →</a></div>' +
         '</div>'
-      : '<div class="empty-state" style="padding:16px;"><p style="margin:0 0 10px;">अभी कोई मॉक टेस्ट नहीं दिया गया है।</p><a href="#/mock" class="btn btn-teal btn-sm">पहला मॉक टेस्ट दें →</a></div>';
+      : '<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">' +
+          REET.charts.donut(0, "0%") +
+          '<div><p style="margin:0;font-size:0.88rem;color:var(--text-secondary);">आपका स्कोर</p>' +
+          '<p style="margin:2px 0 8px;font-size:1.15rem;font-weight:800;">0 / 150</p>' +
+          '<a href="#/mock" class="btn btn-teal btn-sm">पहला टेस्ट दें →</a></div>' +
+        '</div>';
 
-    // Journey steps
     var step1 = true;
     var step2 = summary.completedTopics >= 1;
     var step3 = summary.totalAttempted >= 10;
@@ -132,9 +138,10 @@
         '<span>' + esc(s.label) + '</span></div>';
     }).join("");
 
-    return '<section class="hero-banner">' +
+    return '<div class="dashboard-canvas">' +
+      '<section class="hero-banner">' +
         '<div class="hero-copy">' +
-          '<h1 class="hero-title">तुम्हारी <span class="hero-highlight">REET की तैयारी</span> — अब एक नए <span class="hero-highlight">Adventure</span> की शुरुआत है!</h1>' +
+          '<h1 class="hero-title">तुम्हारी <span class="hero-highlight">REET की तैयारी</span><br>अब एक नए <span class="hero-highlight">Adventure</span> की शुरुआत है!</h1>' +
           '<p class="hero-sub">सीखो, समझो, अभ्यास करो और REET Level 1 में सफलता पाओ!</p>' +
           '<a href="' + heroRoute + '" class="btn btn-cta">' + heroBtnText + '</a>' +
         '</div>' +
@@ -157,15 +164,26 @@
         '</div>' +
         '<div class="parchment-card stat-card">' +
           '<div class="stat-icon-box" aria-hidden="true">🎯</div>' +
-          '<div><div class="stat-label">मॉक टेस्ट स्कोर</div><div class="stat-value">' + mockDisplay + '</div><div style="font-size:0.78rem;color:var(--text-muted);">' + esc(mockSub) + '</div></div>' +
+          '<div><div class="stat-label">मॉक टेस्ट स्कोर</div><div class="stat-value">' + mockDisplay + '</div><div style="font-size:0.76rem;color:var(--text-muted);">' + esc(mockSub) + '</div></div>' +
         '</div>' +
       '</section>' +
 
-      '<section class="subjects-grid" aria-label="REET विषय">' + subjectCardsHtml + '</section>' +
+      '<section class="subjects-and-goal-row" aria-label="REET विषय एवं आज का लक्ष्य">' +
+        subjectCardsHtml +
+        '<aside class="parchment-card goal-card">' +
+          '<div>' +
+            '<div class="widget-header" style="margin-bottom:6px;"><h2 class="widget-title" style="font-size:1rem;">📅 आज का लक्ष्य</h2></div>' +
+            '<p style="margin:0 0 6px;font-size:0.84rem;font-weight:700;">' + tasks.length + ' में से ' + doneTasks + ' पूरे</p>' +
+            '<div class="stat-bar" style="margin-bottom:8px;"><div class="stat-bar-fill" style="width:' + (tasks.length ? Math.round((doneTasks / tasks.length) * 100) : 0) + '%"></div></div>' +
+            tasksHtml +
+          '</div>' +
+          '<a href="#/planner" class="btn btn-teal btn-sm" style="width:100%;margin-top:8px;">लक्ष्य देखें →</a>' +
+        '</aside>' +
+      '</section>' +
 
       '<section class="dashboard-widgets">' +
         '<div class="parchment-card">' +
-          '<div class="widget-header"><h2 class="widget-title">⭐ आज का महत्वपूर्ण प्रश्न</h2><a href="#/practice" style="font-size:0.85rem;font-weight:700;color:var(--teal-700);">प्रैक्टिस ज़ोन →</a></div>' +
+          '<div class="widget-header"><h2 class="widget-title">⭐ आज का महत्वपूर्ण प्रश्न</h2><a href="#/practice" style="font-size:0.84rem;font-weight:700;color:var(--teal-700);">View All →</a></div>' +
           qotdHtml +
         '</div>' +
         '<div class="parchment-card">' +
@@ -173,13 +191,10 @@
           lastMockHtml +
         '</div>' +
         '<div class="parchment-card">' +
-          '<div class="widget-header"><h2 class="widget-title">📅 आज का लक्ष्य (' + doneTasks + '/' + tasks.length + ')</h2><a href="#/planner" class="btn btn-teal btn-sm">लक्ष्य देखें</a></div>' +
-          tasksHtml +
-          '<hr style="border:none;border-top:1px solid var(--parchment-border);margin:12px 0;">' +
-          '<h3 style="font-size:0.95rem;margin-bottom:8px;">⚡ Quick Access</h3>' +
+          '<div class="widget-header"><h2 class="widget-title">⚡ Quick Access</h2></div>' +
           '<div class="quick-access-grid">' +
             '<a href="#/pyq-lab" class="quick-tile">📄 PYQ पेपर्स</a>' +
-            '<a href="#/revision/formulas" class="quick-tile">📐 फॉर्मूला शीट</a>' +
+            '<a href="#/revision/formulas" class="quick-tile">⭐ फॉर्मूला शीट</a>' +
             '<a href="#/revision/notes" class="quick-tile">📝 शॉर्ट नोट्स</a>' +
             '<a href="#/revision" class="quick-tile">🔄 रिवीजन नोट्स</a>' +
           '</div>' +
@@ -187,9 +202,10 @@
       '</section>' +
 
       '<section class="journey-strip">' +
-        '<div class="journey-title">आपकी तैयारी का सफर</div>' +
+        '<div class="journey-title">🏆 आपकी तैयारी का सफर</div>' +
         '<div class="journey-steps">' + journeyHtml + '</div>' +
-      '</section>';
+      '</section>' +
+    '</div>';
   };
 
   /* 2. STUDY LIBRARY */
